@@ -1,4 +1,11 @@
-import { expect, type Page } from "@playwright/test";
+import { devices, expect, type Page } from "@playwright/test";
+
+/**
+ * Modern mobile device profile used for all e2e runs and screenshots — this is
+ * a phone-first app used on the water, so we test/capture at a phone viewport
+ * (Pixel 7: 412×915, chromium-based) rather than a desktop size.
+ */
+export const MOBILE_DEVICE = devices["Pixel 7"];
 
 /** Create a brand-new session and wait for the map screen. Returns the code. */
 export async function createSession(page: Page, name: string): Promise<string> {

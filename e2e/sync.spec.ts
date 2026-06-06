@@ -1,15 +1,17 @@
 import { expect, test } from "@playwright/test";
-import { createSession, joinSession, waitForFix } from "./helpers";
+import { createSession, joinSession, MOBILE_DEVICE, waitForFix } from "./helpers";
 
 // Two browser contexts = two devices on the same session over the WebSocket relay.
 test("two devices join one session and see each other relative to the flag boat", async ({
   browser,
 }) => {
   const flagCtx = await browser.newContext({
+    ...MOBILE_DEVICE,
     permissions: ["geolocation"],
     geolocation: { latitude: 36.108, longitude: -86.627 },
   });
   const markCtx = await browser.newContext({
+    ...MOBILE_DEVICE,
     permissions: ["geolocation"],
     geolocation: { latitude: 36.118, longitude: -86.627 }, // ~0.6 nm north
   });

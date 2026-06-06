@@ -1,4 +1,5 @@
-import { defineConfig, devices } from "@playwright/test";
+import { defineConfig } from "@playwright/test";
+import { MOBILE_DEVICE } from "./e2e/helpers";
 
 const PORT = 8080;
 const BASE_URL = `http://localhost:${PORT}`;
@@ -16,6 +17,7 @@ export default defineConfig({
   reporter: process.env.CI ? [["list"], ["html", { open: "never" }]] : "list",
   outputDir: "./e2e/.results",
   use: {
+    ...MOBILE_DEVICE,
     baseURL: BASE_URL,
     locale: "en-US",
     permissions: ["geolocation"],
@@ -24,7 +26,7 @@ export default defineConfig({
     trace: "on-first-retry",
     screenshot: "only-on-failure",
   },
-  projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"] } }],
+  projects: [{ name: "mobile-chromium", use: { ...MOBILE_DEVICE } }],
   webServer: {
     command: "npm run build && npm run start",
     url: `${BASE_URL}/healthz`,

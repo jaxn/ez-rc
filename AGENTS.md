@@ -61,4 +61,8 @@ Run `npm run typecheck && npm test` before committing. For UI work, also run
 - **Screenshots are required for any PR with frontend/UI changes.** Add before/
   after images to the PR description. The e2e suite also captures
   `e2e/screenshots/course-set.png`, uploaded as a CI artifact you can attach.
+- **This is a phone-first app: Playwright e2e and screenshots target a modern
+  mobile viewport** (Pixel 7) via `MOBILE_DEVICE` in `e2e/helpers.ts`, used by
+  both `playwright.config.ts` and the manually-created contexts in `sync.spec.ts`.
+  Capture/verify UI at that mobile size, not a desktop window.
 - Don't open a PR unless asked; push the branch and let the human decide.
