@@ -36,14 +36,19 @@ export function startWatch({ onFix, onStatus }: WatchHandlers): () => void {
   }
 
   onStatus("prompting");
-  let gotFirstFix = false;
+  // Track the last reported status so we only notify on transitions — and so a
+  // successful fix clears a previous transient error (common out on the water).
+  let lastStatus: GeoStatus = "prompting";
+  const report = (status: GeoStatus, message?: string) => {
+    if (status !== lastStatus) {
+      lastStatus = status;
+      onStatus(status, message);
+    }
+  };
 
   const watchId = navigator.geolocation.watchPosition(
     (pos) => {
-      if (!gotFirstFix) {
-        gotFirstFix = true;
-        onStatus("active");
-      }
+      report("active");
       onFix({
         lat: pos.coords.latitude,
         lng: pos.coords.longitude,
@@ -54,9 +59,9 @@ export function startWatch({ onFix, onStatus }: WatchHandlers): () => void {
     },
     (err) => {
       if (err.code === err.PERMISSION_DENIED) {
-        onStatus("denied", "Location permission denied. Enable it to share your position.");
+        report("denied", "Location permission denied. Enable it to share your position.");
       } else {
-        onStatus("error", err.message || "Could not get location.");
+        report("error", err.message || "Could not get location.");
       }
     },
     { enableHighAccuracy: true, maximumAge: 0, timeout: 20000 },

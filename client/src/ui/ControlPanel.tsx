@@ -29,7 +29,7 @@ export function ControlPanel({ onOpenWind }: Props) {
   return (
     <div className="control-panel">
       {leg && (
-        <div className="course-leg">
+        <div className="course-leg" data-testid="course-leg">
           Course (W↔L): <strong>{formatDistance(leg.distanceM)}</strong> ·{" "}
           {formatBearing(leg.bearing)}
         </div>

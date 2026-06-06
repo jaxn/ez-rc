@@ -16,11 +16,18 @@
     "build": "npm -w client run build",
     "start": "npm -w server run start",
     "typecheck": "npm -w shared run typecheck && npm -w server run typecheck && npm -w client run typecheck",
-    "preview": "npm run build && npm run start"
+    "preview": "npm run build && npm run start",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:unit": "vitest run",
+    "test:e2e": "playwright test"
   },
   "devDependencies": {
+    "@playwright/test": "^1.49.1",
     "concurrently": "^9.1.0",
-    "typescript": "^5.7.2"
+    "jsdom": "^25.0.1",
+    "typescript": "^5.7.2",
+    "vitest": "^2.1.8"
   },
   "engines": {
     "node": ">=20"

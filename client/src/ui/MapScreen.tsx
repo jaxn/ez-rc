@@ -23,7 +23,7 @@ export function MapScreen() {
 
       {/* Top bar: wind at the top, just as the map is oriented. */}
       <header className="topbar">
-        <div className="wind-readout">
+        <div className="wind-readout" data-testid="wind-readout">
           {wind ? (
             <>
               <span className="wind-arrow" aria-hidden>
@@ -38,7 +38,9 @@ export function MapScreen() {
             <span className="wind-text muted">Wind not set — north up</span>
           )}
         </div>
-        <div className="session-chip">{sessionCode}</div>
+        <div className="session-chip" data-testid="session-code">
+          {sessionCode}
+        </div>
       </header>
 
       {/* Connection / location status */}

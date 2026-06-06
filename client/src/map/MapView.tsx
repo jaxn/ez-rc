@@ -7,6 +7,7 @@ import { useEffect, useRef } from "react";
 import maplibregl, { type StyleSpecification } from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 import { useStore } from "../state/store";
+import { COURSE_ZOOM, DEFAULT_CENTER, DEFAULT_ZOOM } from "../config";
 import { registerIcons } from "./icons";
 import {
   addLayers,
@@ -52,11 +53,13 @@ export function MapView() {
     const map = new maplibregl.Map({
       container: containerRef.current,
       style: STYLE,
-      center: [0, 20],
-      zoom: 2,
+      center: DEFAULT_CENTER,
+      zoom: DEFAULT_ZOOM,
       attributionControl: { compact: true },
     });
     mapRef.current = map;
+    // Expose the instance for end-to-end tests (read-only inspection).
+    (window as Window & { __ezrcMap?: maplibregl.Map }).__ezrcMap = map;
     map.addControl(new maplibregl.NavigationControl({ showZoom: true }), "bottom-right");
 
     map.on("load", async () => {
@@ -95,7 +98,7 @@ export function MapView() {
     const self = devices[selfDeviceId];
     const anchor = hasFix(flag) ? flag : hasFix(self) ? self : undefined;
     if (anchor) {
-      map.easeTo({ center: [anchor.lng, anchor.lat], zoom: 15 });
+      map.easeTo({ center: [anchor.lng, anchor.lat], zoom: COURSE_ZOOM });
       centeredRef.current = true;
     }
   }, [devices, flagBoatId, selfDeviceId]);

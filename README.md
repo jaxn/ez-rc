@@ -54,9 +54,31 @@ Other scripts:
 
 ```bash
 npm run typecheck    # type-check all workspaces
+npm test             # Vitest unit tests (client + server/shared)
 npm run build        # build the client PWA into client/dist
 npm start            # run the server, serving the built PWA + WS on :8080
+npm run test:e2e     # Playwright e2e (builds + starts the server itself)
 ```
+
+## Tests & CI
+
+- **Unit tests** (Vitest): geospatial math, store reducers, selectors
+  (`client/`), plus the session registry, event log, and protocol parsing
+  (`server/`/`shared/`). Run with `npm test`.
+- **End-to-end tests** (Playwright, `e2e/`): a full course-setting flow (flag
+  boat → marks → course leg → wind-up rotation) with mocked geolocation, and a
+  two-device WebSocket sync test. Run with `npm run test:e2e` (needs
+  `npx playwright install chromium` once).
+- **CI** (`.github/workflows/ci.yml`) runs typecheck, unit tests, build, and e2e
+  on every push/PR, and uploads the Playwright report + screenshots as artifacts.
+
+## Contributing / AI agents
+
+See [`AGENTS.md`](./AGENTS.md) for architecture, conventions, and the rule that
+**UI changes must include screenshots** in the PR. Agent-specific entry points:
+[`CLAUDE.md`](./CLAUDE.md) and
+[`.github/copilot-instructions.md`](./.github/copilot-instructions.md). A
+SessionStart hook (`.claude/`) installs dependencies for Claude Code on the web.
 
 ## Testing with multiple devices
 
