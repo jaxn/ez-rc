@@ -63,14 +63,18 @@ export function appendEvent(
     await appendFile(logPath(sessionCode), JSON.stringify(entry) + "\n", "utf8");
     return entry;
   });
-  // Keep the chain alive regardless of this task's outcome.
-  appendQueues.set(
-    sessionCode,
-    task.then(
-      () => {},
-      () => {},
-    ),
+  // Advance the per-session queue with an error-swallowing tail. Attaching this
+  // handler also marks `task` as handled, so a fire-and-forget caller can't
+  // trigger an unhandled rejection. Drop the entry once it settles if nothing
+  // newer queued behind it, so the map doesn't grow unbounded over many codes.
+  const tail = task.then(
+    () => {},
+    () => {},
   );
+  appendQueues.set(sessionCode, tail);
+  void tail.then(() => {
+    if (appendQueues.get(sessionCode) === tail) appendQueues.delete(sessionCode);
+  });
   return task;
 }
 

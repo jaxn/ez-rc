@@ -6,7 +6,9 @@
 
 ## Changes
 
-## <!-- Bullet the notable changes. -->
+<!-- Replace the bullet(s) below with the notable changes. -->
+
+- …
 
 ## Screenshots
 
@@ -20,6 +22,8 @@ Write "N/A — no UI changes" if this PR has no user-visible UI impact.
 
 <!-- How did you verify this? -->
 
+- [ ] `npm run lint`
+- [ ] `npm run format:check`
 - [ ] `npm run typecheck`
 - [ ] `npm test`
 - [ ] `npm run test:e2e` (for UI changes)
