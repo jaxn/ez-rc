@@ -15,6 +15,9 @@ import { JoinCodeScreen } from "./ui/JoinCodeScreen";
 import { MapScreen } from "./ui/MapScreen";
 
 const POSITION_MIN_INTERVAL_MS = 1000;
+/** Re-send our last position this often while connected, so late-joining peers
+ *  (and recovery from a lost packet) see us even when the GPS fix isn't moving. */
+const POSITION_HEARTBEAT_MS = 3000;
 
 export function App() {
   const sessionCode = useStore((s) => s.sessionCode);
@@ -73,20 +76,27 @@ export function App() {
     }
   }, [joined, deviceId]);
 
-  // Flush our latest known position whenever the socket (re)connects, so a fix
-  // acquired before connecting still reaches the server (and peers' snapshots).
+  // While connected, push our latest known position on connect and then on a
+  // heartbeat. This delivers a fix acquired before the socket opened, survives
+  // a lost first packet, and keeps a stationary boat visible to peers that join
+  // later (whose join snapshot wouldn't otherwise include us).
   useEffect(() => {
     if (connStatus !== "connected") return;
-    const self = useStore.getState().devices[deviceId];
-    if (hasFix(self)) {
-      sendPosition({
-        lat: self.lat,
-        lng: self.lng,
-        accuracy: self.accuracy,
-        heading: self.heading,
-        speed: self.speed,
-      });
-    }
+    const flush = () => {
+      const self = useStore.getState().devices[deviceId];
+      if (hasFix(self)) {
+        sendPosition({
+          lat: self.lat,
+          lng: self.lng,
+          accuracy: self.accuracy,
+          heading: self.heading,
+          speed: self.speed,
+        });
+      }
+    };
+    flush();
+    const id = setInterval(flush, POSITION_HEARTBEAT_MS);
+    return () => clearInterval(id);
   }, [connStatus, deviceId]);
 
   // Re-enable onboarding buttons if a connection attempt fails or is rejected.
