@@ -47,9 +47,7 @@ export function MapScreen() {
       {(connStatus !== "connected" || geoStatus !== "active") && (
         <div className="status-banner">
           {connStatus !== "connected" && <span>● {connStatus}</span>}
-          {geoStatus !== "active" && (
-            <span>📍 {geoMessage ?? geoStatus}</span>
-          )}
+          {geoStatus !== "active" && <span>📍 {geoMessage ?? geoStatus}</span>}
         </div>
       )}
 

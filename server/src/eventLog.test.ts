@@ -15,9 +15,13 @@ const logFile = path.join(dataDir, `events-${code}.jsonl`);
 const seededCode = `VITSEED${Math.floor(Math.random() * 1e6)}`;
 const seededFile = path.join(dataDir, `events-${seededCode}.jsonl`);
 
+const concCode = `VITCONC${Math.floor(Math.random() * 1e6)}`;
+const concFile = path.join(dataDir, `events-${concCode}.jsonl`);
+
 afterAll(async () => {
   await rm(logFile, { force: true });
   await rm(seededFile, { force: true });
+  await rm(concFile, { force: true });
 });
 
 describe("event log", () => {
@@ -55,5 +59,19 @@ describe("event log", () => {
     expect(entry.seq).toBe(4);
     const all = await readSession(seededCode);
     expect(all.map((e) => e.seq)).toEqual([1, 2, 3, 4]);
+  });
+
+  it("serializes concurrent appends into unique, in-order seqs", async () => {
+    const N = 25;
+    const results = await Promise.all(
+      Array.from({ length: N }, (_, i) => appendEvent(concCode, "mark_dropped", "d", { i })),
+    );
+    // Every append got a distinct seq 1..N.
+    expect([...results.map((r) => r.seq)].sort((a, b) => a - b)).toEqual(
+      Array.from({ length: N }, (_, i) => i + 1),
+    );
+    // On-disk order matches seq order (no interleaved/duplicate writes).
+    const onDisk = await readSession(concCode);
+    expect(onDisk.map((e) => e.seq)).toEqual(Array.from({ length: N }, (_, i) => i + 1));
   });
 });

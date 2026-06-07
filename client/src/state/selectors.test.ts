@@ -31,7 +31,14 @@ describe("relativeDevices", () => {
 });
 
 describe("courseLeg", () => {
-  const windward: Mark = { id: "w", type: "windward", lat: 36.12, lng: -86.6, byDeviceId: "x", ts: 1 };
+  const windward: Mark = {
+    id: "w",
+    type: "windward",
+    lat: 36.12,
+    lng: -86.6,
+    byDeviceId: "x",
+    ts: 1,
+  };
   const leeward: Mark = { id: "l", type: "leeward", lat: 36.1, lng: -86.6, byDeviceId: "x", ts: 2 };
 
   it("is null until both windward and leeward exist", () => {

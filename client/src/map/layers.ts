@@ -4,12 +4,7 @@
  * deal in real lat/lng here.
  */
 
-import type {
-  Feature,
-  FeatureCollection,
-  LineString,
-  Point,
-} from "geojson";
+import type { Feature, FeatureCollection, LineString, Point } from "geojson";
 import type { DevicePosition, Mark } from "@ezrc/shared";
 import type { Map as MlMap } from "maplibre-gl";
 import { formatBearing, formatDistance } from "../geo/math";

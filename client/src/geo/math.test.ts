@@ -1,11 +1,5 @@
 import { describe, expect, it } from "vitest";
-import {
-  bearingDeg,
-  distanceMeters,
-  formatBearing,
-  formatDistance,
-  metersToNm,
-} from "./math";
+import { bearingDeg, distanceMeters, formatBearing, formatDistance, metersToNm } from "./math";
 
 describe("distanceMeters", () => {
   it("is ~0 for identical points", () => {

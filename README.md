@@ -26,13 +26,13 @@ all oriented to the wind.
 
 ## Tech stack
 
-| Layer | Choice |
-|---|---|
-| Client | Vite + React + TypeScript, MapLibre GL JS (OSM raster tiles), Zustand, Turf.js |
-| Server | Node.js + Express + `ws` |
-| Realtime | WebSocket relay with simple room/session codes |
-| Persistence | Append-only JSONL event log per session (`data/events-<CODE>.jsonl`) |
-| PWA | `vite-plugin-pwa` (manifest + Workbox app-shell caching) |
+| Layer       | Choice                                                                         |
+| ----------- | ------------------------------------------------------------------------------ |
+| Client      | Vite + React + TypeScript, MapLibre GL JS (OSM raster tiles), Zustand, Turf.js |
+| Server      | Node.js + Express + `ws`                                                       |
+| Realtime    | WebSocket relay with simple room/session codes                                 |
+| Persistence | Append-only JSONL event log per session (`data/events-<CODE>.jsonl`)           |
+| PWA         | `vite-plugin-pwa` (manifest + Workbox app-shell caching)                       |
 
 Monorepo via npm workspaces: `shared/` (wire protocol + model types), `server/`,
 `client/`.

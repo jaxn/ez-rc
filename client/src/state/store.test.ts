@@ -32,7 +32,10 @@ describe("applyServerMessage", () => {
   });
 
   it("applies position updates and mark drops, and clears the course", () => {
-    apply({ type: "positionUpdate", position: { deviceId: "b", name: "B", lat: 36.1, lng: -86.6, ts: 3 } });
+    apply({
+      type: "positionUpdate",
+      position: { deviceId: "b", name: "B", lat: 36.1, lng: -86.6, ts: 3 },
+    });
     expect(useStore.getState().devices["b"].lat).toBe(36.1);
 
     apply({ type: "markDropped", mark });
@@ -46,7 +49,9 @@ describe("applyServerMessage", () => {
   });
 
   it("preserves a locally-tracked self position the server doesn't have yet", () => {
-    useStore.getState().setSelfPosition({ deviceId: "me", name: "Me", lat: 36.1, lng: -86.6, ts: 5 });
+    useStore
+      .getState()
+      .setSelfPosition({ deviceId: "me", name: "Me", lat: 36.1, lng: -86.6, ts: 5 });
     apply({
       type: "snapshot",
       selfDeviceId: "me",

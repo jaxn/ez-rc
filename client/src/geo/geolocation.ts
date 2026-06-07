@@ -28,10 +28,7 @@ export function startWatch({ onFix, onStatus }: WatchHandlers): () => void {
     return () => {};
   }
   if (!window.isSecureContext) {
-    onStatus(
-      "error",
-      "Location needs a secure context (HTTPS). Use https:// or localhost.",
-    );
+    onStatus("error", "Location needs a secure context (HTTPS). Use https:// or localhost.");
     return () => {};
   }
 

@@ -13,18 +13,20 @@ are dropped, wind is entered, and the map rotates so the wind comes from the top
 
 ## Layout (npm workspaces monorepo)
 
-| Path | Role |
-|---|---|
-| `shared/src/` | Wire protocol (`protocol.ts`) + domain model (`model.ts`). Imported by both client and server — **change here first** when adding a message or field. |
-| `server/src/` | Node + Express + `ws`. `relay.ts` routes messages, `sessions.ts` is the in-memory room registry, `eventLog.ts` is the append-only JSONL log. |
+| Path          | Role                                                                                                                                                                           |
+| ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `shared/src/` | Wire protocol (`protocol.ts`) + domain model (`model.ts`). Imported by both client and server — **change here first** when adding a message or field.                          |
+| `server/src/` | Node + Express + `ws`. `relay.ts` routes messages, `sessions.ts` is the in-memory room registry, `eventLog.ts` is the append-only JSONL log.                                   |
 | `client/src/` | Vite + React + TS PWA. `map/` (MapLibre), `state/` (Zustand store + selectors), `net/ws.ts`, `geo/` (geolocation + Turf math), `ui/` (screens/panels), `config.ts` (defaults). |
-| `e2e/` | Playwright end-to-end specs. |
+| `e2e/`        | Playwright end-to-end specs.                                                                                                                                                   |
 
 ## Commands
 
 ```bash
 npm install          # install everything (workspaces hoist to root)
 npm run dev          # WS server (:8080) + Vite dev server together
+npm run lint         # ESLint (flat config; react-hooks rules on the client)
+npm run format       # Prettier --write (use format:check to verify only)
 npm run typecheck    # tsc --noEmit across shared/server/client
 npm test             # Vitest unit tests (client + node projects)
 npm run build        # build the client PWA into client/dist
@@ -32,8 +34,10 @@ npm start            # serve built PWA + WebSocket on :8080
 npm run test:e2e     # Playwright (builds + starts the server itself)
 ```
 
-Run `npm run typecheck && npm test` before committing. For UI work, also run
-`npm run test:e2e`.
+Run `npm run lint && npm run format:check && npm run typecheck && npm test`
+before committing (CI runs all of these). For UI work, also run
+`npm run test:e2e`. `react-hooks/exhaustive-deps` is a **warning** — heed it; it
+catches the stale-closure/effect-dependency bugs that are easy to introduce here.
 
 ## Conventions that will bite you if ignored
 

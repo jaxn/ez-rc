@@ -11,10 +11,14 @@ describe("parseClientMessage", () => {
 
   it("accepts a valid dropMark and rejects an unknown mark type", () => {
     expect(
-      parseClientMessage(JSON.stringify({ type: "dropMark", markType: "windward", lat: 1, lng: 2, clientTs: 0 })),
+      parseClientMessage(
+        JSON.stringify({ type: "dropMark", markType: "windward", lat: 1, lng: 2, clientTs: 0 }),
+      ),
     ).not.toBeNull();
     expect(
-      parseClientMessage(JSON.stringify({ type: "dropMark", markType: "gate", lat: 1, lng: 2, clientTs: 0 })),
+      parseClientMessage(
+        JSON.stringify({ type: "dropMark", markType: "gate", lat: 1, lng: 2, clientTs: 0 }),
+      ),
     ).toBeNull();
   });
 
@@ -36,11 +40,15 @@ describe("parseClientMessage", () => {
       parseClientMessage(JSON.stringify({ type: "setWind", directionDeg: 270, clientTs: 0 })),
     ).not.toBeNull();
     expect(
-      parseClientMessage(JSON.stringify({ type: "setWind", directionDeg: 270, clientTs: 0, speedKts: 12 })),
+      parseClientMessage(
+        JSON.stringify({ type: "setWind", directionDeg: 270, clientTs: 0, speedKts: 12 }),
+      ),
     ).not.toBeNull();
     expect(parseClientMessage(JSON.stringify({ type: "setWind", directionDeg: 270 }))).toBeNull();
     expect(
-      parseClientMessage(JSON.stringify({ type: "setWind", directionDeg: 270, clientTs: 0, speedKts: "x" })),
+      parseClientMessage(
+        JSON.stringify({ type: "setWind", directionDeg: 270, clientTs: 0, speedKts: "x" }),
+      ),
     ).toBeNull();
   });
 

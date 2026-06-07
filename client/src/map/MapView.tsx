@@ -74,7 +74,6 @@ export function MapView() {
       map.remove();
       mapRef.current = null;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Read the latest state from the store rather than a render closure, so the
