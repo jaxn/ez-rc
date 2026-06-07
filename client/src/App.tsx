@@ -1,36 +1,47 @@
 /**
- * App shell: shows the join screen until connected, then the live map with
- * control overlays. Owns the geolocation watch + throttled position uploads.
+ * App shell + onboarding flow:
+ *   Welcome → (request permissions) → Role → (create | join) → Map.
+ * Owns the geolocation watch + throttled position uploads once started.
  */
 
-import { useEffect, useRef } from "react";
-import { useStore } from "./state/store";
+import { useEffect, useRef, useState } from "react";
+import { hasFix, useStore } from "./state/store";
 import { startWatch, type GeoFix } from "./geo/geolocation";
-import { connect, sendPosition } from "./net/ws";
-import { JoinScreen } from "./ui/JoinScreen";
+import { requestNotificationPermission } from "./geo/permissions";
+import { connect, sendPosition, sendSetFlagBoat } from "./net/ws";
+import { WelcomeScreen } from "./ui/WelcomeScreen";
+import { RoleScreen } from "./ui/RoleScreen";
+import { JoinCodeScreen } from "./ui/JoinCodeScreen";
 import { MapScreen } from "./ui/MapScreen";
 
 const POSITION_MIN_INTERVAL_MS = 1000;
 
 export function App() {
   const sessionCode = useStore((s) => s.sessionCode);
+  const connStatus = useStore((s) => s.connStatus);
   const deviceId = useStore((s) => s.deviceId);
   const setGeoStatus = useStore((s) => s.setGeoStatus);
   const setSelfPosition = useStore((s) => s.setSelfPosition);
-  const name = useStore((s) => s.name);
+  const setName = useStore((s) => s.setName);
 
+  const [started, setStarted] = useState(false);
+  const [step, setStep] = useState<"role" | "join">("role");
+  const [submitting, setSubmitting] = useState(false);
+  const wantFlagBoatRef = useRef(false);
   const lastSentRef = useRef(0);
-  const joined = sessionCode !== null;
 
-  // Once joined, watch geolocation and stream throttled positions.
+  const joined = sessionCode !== null;
+  const connecting = submitting || connStatus === "connecting";
+
+  // Watch location once the user taps "Get started". Reads the current name
+  // from the store so renaming on create/join doesn't restart the watch.
   useEffect(() => {
-    if (!joined) return;
+    if (!started) return;
 
     const onFix = (fix: GeoFix) => {
-      // Update our own marker immediately for a responsive map.
       setSelfPosition({
         deviceId,
-        name: name || "me",
+        name: useStore.getState().name || "Boat",
         lat: fix.lat,
         lng: fix.lng,
         accuracy: fix.accuracy,
@@ -51,12 +62,74 @@ export function App() {
       }
     };
 
-    const stop = startWatch({ onFix, onStatus: setGeoStatus });
-    return stop;
-  }, [joined, deviceId, name, setGeoStatus, setSelfPosition]);
+    return startWatch({ onFix, onStatus: setGeoStatus });
+  }, [started, deviceId, setGeoStatus, setSelfPosition]);
 
+  // After joining the session we just created, claim the flag-boat role.
+  useEffect(() => {
+    if (joined && wantFlagBoatRef.current) {
+      wantFlagBoatRef.current = false;
+      sendSetFlagBoat(deviceId);
+    }
+  }, [joined, deviceId]);
+
+  // Flush our latest known position whenever the socket (re)connects, so a fix
+  // acquired before connecting still reaches the server (and peers' snapshots).
+  useEffect(() => {
+    if (connStatus !== "connected") return;
+    const self = useStore.getState().devices[deviceId];
+    if (hasFix(self)) {
+      sendPosition({
+        lat: self.lat,
+        lng: self.lng,
+        accuracy: self.accuracy,
+        heading: self.heading,
+        speed: self.speed,
+      });
+    }
+  }, [connStatus, deviceId]);
+
+  // Re-enable onboarding buttons if a connection attempt fails or is rejected.
+  const error = useStore((s) => s.error);
+  useEffect(() => {
+    if (connStatus === "disconnected" || error) setSubmitting(false);
+  }, [connStatus, error]);
+
+  function handleGetStarted() {
+    void requestNotificationPermission();
+    setStarted(true); // starting the watch triggers the location permission prompt
+    setStep("role");
+  }
+
+  async function createCourse() {
+    setSubmitting(true);
+    try {
+      const res = await fetch("/api/new-session");
+      const { sessionCode: code } = (await res.json()) as { sessionCode: string };
+      wantFlagBoatRef.current = true;
+      const name = "Flag Boat";
+      setName(name);
+      connect(code, deviceId, name);
+    } catch {
+      setSubmitting(false);
+    }
+  }
+
+  function joinCourse(code: string) {
+    const name = `Boat-${deviceId.slice(0, 4).toUpperCase()}`;
+    setName(name);
+    setSubmitting(true);
+    connect(code, deviceId, name);
+  }
+
+  if (!started) return <WelcomeScreen onGetStarted={handleGetStarted} />;
   if (!joined) {
-    return <JoinScreen onJoin={(code, n) => connect(code, deviceId, n)} />;
+    if (step === "role") {
+      return <RoleScreen busy={connecting} onCreate={createCourse} onJoin={() => setStep("join")} />;
+    }
+    return (
+      <JoinCodeScreen busy={connecting} onBack={() => setStep("role")} onJoin={joinCourse} />
+    );
   }
   return <MapScreen />;
 }

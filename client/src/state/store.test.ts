@@ -45,6 +45,16 @@ describe("applyServerMessage", () => {
     expect(useStore.getState().wind).toBeNull();
   });
 
+  it("preserves a locally-tracked self position the server doesn't have yet", () => {
+    useStore.getState().setSelfPosition({ deviceId: "me", name: "Me", lat: 36.1, lng: -86.6, ts: 5 });
+    apply({
+      type: "snapshot",
+      selfDeviceId: "me",
+      state: { sessionCode: "ABCDE", devices: [], marks: [], wind: null, flagBoatId: null },
+    });
+    expect(useStore.getState().devices["me"]?.lat).toBe(36.1);
+  });
+
   it("removes a device that left", () => {
     apply({ type: "deviceJoined", deviceId: "c", name: "C" });
     expect(useStore.getState().devices["c"]).toBeTruthy();

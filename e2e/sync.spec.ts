@@ -18,15 +18,13 @@ test("two devices join one session and see each other relative to the flag boat"
   const flag = await flagCtx.newPage();
   const markBoat = await markCtx.newPage();
 
-  const code = await createSession(flag, "Flag Boat");
+  const code = await createSession(flag);
   await waitForFix(flag);
 
-  await joinSession(markBoat, "Mark Boat", code);
+  await joinSession(markBoat, code);
   await waitForFix(markBoat);
 
-  // Flag Boat designates itself as the flag boat; the change propagates.
-  await flag.getByRole("button", { name: /flag boat/i }).click();
-
+  // Creating the course auto-designates the flag boat; the change propagates.
   // Both devices now show two boats in the roster.
   await expect(flag.getByRole("button", { name: /Boats \(2\)/ })).toBeVisible();
   await expect(markBoat.getByRole("button", { name: /Boats \(2\)/ })).toBeVisible();

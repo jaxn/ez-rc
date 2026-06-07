@@ -10,12 +10,11 @@ test("set a course: flag boat, marks, course leg, and wind-up rotation", async (
   context,
 }) => {
   await context.setGeolocation(HAMILTON_CREEK);
-  await createSession(page, "Flag Boat");
+  await createSession(page);
   await waitForFix(page);
 
-  // Designate this device as the flag boat.
-  await page.getByRole("button", { name: /flag boat/i }).click();
-  await expect(page.getByRole("button", { name: "I'm the flag boat" })).toBeVisible();
+  // Creating a course auto-designates this device as the flag boat.
+  await expect(page.getByRole("button", { name: /I'm the flag boat/ })).toBeVisible();
 
   // Drop the leeward mark here, then move ~0.9 nm north and drop the windward.
   await page.getByRole("button", { name: "Leeward" }).click();
