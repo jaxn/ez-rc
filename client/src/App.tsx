@@ -26,6 +26,7 @@ export function App() {
   const setGeoStatus = useStore((s) => s.setGeoStatus);
   const setSelfPosition = useStore((s) => s.setSelfPosition);
   const setName = useStore((s) => s.setName);
+  const clearError = useStore((s) => s.clearError);
 
   const [started, setStarted] = useState(false);
   const [step, setStep] = useState<"role" | "join">("role");
@@ -112,6 +113,7 @@ export function App() {
   }
 
   async function createCourse() {
+    clearError();
     setSubmitting(true);
     try {
       const res = await fetch("/api/new-session");
@@ -126,6 +128,9 @@ export function App() {
   }
 
   function joinCourse(code: string) {
+    // Joining must never claim the flag-boat role, even after a failed create.
+    clearError();
+    wantFlagBoatRef.current = false;
     const name = `Boat-${deviceId.slice(0, 4).toUpperCase()}`;
     setName(name);
     setSubmitting(true);
