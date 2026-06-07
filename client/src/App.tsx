@@ -140,11 +140,11 @@ export function App() {
   if (!started) return <WelcomeScreen onGetStarted={handleGetStarted} />;
   if (!joined) {
     if (step === "role") {
-      return <RoleScreen busy={connecting} onCreate={createCourse} onJoin={() => setStep("join")} />;
+      return (
+        <RoleScreen busy={connecting} onCreate={createCourse} onJoin={() => setStep("join")} />
+      );
     }
-    return (
-      <JoinCodeScreen busy={connecting} onBack={() => setStep("role")} onJoin={joinCourse} />
-    );
+    return <JoinCodeScreen busy={connecting} onBack={() => setStep("role")} onJoin={joinCourse} />;
   }
   return <MapScreen />;
 }

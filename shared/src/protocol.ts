@@ -163,14 +163,12 @@ export function parseClientMessage(raw: string): ClientMessage | null {
     }
     case "position": {
       const m = data as PositionMsg;
-      return (
-        isFiniteNum(m.lat) &&
+      return isFiniteNum(m.lat) &&
         isFiniteNum(m.lng) &&
         isFiniteNum(m.clientTs) &&
         isOptionalFiniteNum(m.accuracy) &&
         isNullableFiniteNum(m.heading) &&
         isNullableFiniteNum(m.speed)
-      )
         ? m
         : null;
     }

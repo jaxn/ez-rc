@@ -26,7 +26,9 @@ export function WindDialog({ onClose }: Props) {
     <div className="modal-backdrop" onClick={onClose}>
       <div className="modal" onClick={(e) => e.stopPropagation()}>
         <h2>Set wind</h2>
-        <p className="modal-sub">Direction the wind is coming FROM. The map rotates so it blows down the screen.</p>
+        <p className="modal-sub">
+          Direction the wind is coming FROM. The map rotates so it blows down the screen.
+        </p>
 
         <label>
           Direction (°)

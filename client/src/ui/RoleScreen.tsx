@@ -14,8 +14,7 @@ interface Props {
 export function RoleScreen({ busy, onCreate, onJoin }: Props) {
   const geoStatus = useStore((s) => s.geoStatus);
   const geoMessage = useStore((s) => s.geoMessage);
-  const geoBlocked =
-    geoStatus === "denied" || geoStatus === "error" || geoStatus === "unavailable";
+  const geoBlocked = geoStatus === "denied" || geoStatus === "error" || geoStatus === "unavailable";
 
   return (
     <div className="screen join">

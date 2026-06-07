@@ -12,38 +12,25 @@ import type { EventLogEntry, EventType } from "@ezrc/shared";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const DATA_DIR = path.resolve(__dirname, "../../data");
 
-/** Per-session monotonic sequence counters (in-memory; recovered lazily on read). */
+/** Per-session monotonic sequence counters (recovered lazily from disk). */
 const seqCounters = new Map<string, number>();
 
 /**
- * Reserve the next seq for a session. On first use after a (re)start, the
- * counter is seeded from the highest seq already on disk so we never restart at
- * 1 and emit duplicate seqs. Awaits are chained per code so concurrent appends
- * can't race on the lazy seed.
+ * Per-session append queue. Chaining each append onto the previous one
+ * serializes both seq assignment and the file write, so on-disk order always
+ * matches seq order even when several events arrive in the same tick.
  */
-const seedLocks = new Map<string, Promise<void>>();
+const appendQueues = new Map<string, Promise<unknown>>();
 
-async function nextSeq(sessionCode: string): Promise<number> {
+async function loadMaxSeq(sessionCode: string): Promise<number> {
   if (!seqCounters.has(sessionCode)) {
-    let release!: () => void;
-    const inFlight = seedLocks.get(sessionCode);
-    if (inFlight) {
-      await inFlight;
-    } else {
-      seedLocks.set(sessionCode, new Promise<void>((r) => (release = r)));
-      try {
-        const existing = await readSession(sessionCode);
-        const maxSeq = existing.reduce((max, e) => Math.max(max, e.seq), 0);
-        if (!seqCounters.has(sessionCode)) seqCounters.set(sessionCode, maxSeq);
-      } finally {
-        release();
-        seedLocks.delete(sessionCode);
-      }
-    }
+    const existing = await readSession(sessionCode);
+    seqCounters.set(
+      sessionCode,
+      existing.reduce((max, e) => Math.max(max, e.seq), 0),
+    );
   }
-  const seq = (seqCounters.get(sessionCode) ?? 0) + 1;
-  seqCounters.set(sessionCode, seq);
-  return seq;
+  return seqCounters.get(sessionCode) ?? 0;
 }
 
 function logPath(sessionCode: string): string {
@@ -53,35 +40,53 @@ function logPath(sessionCode: string): string {
 }
 
 /** Append one durable event and return the written entry. */
-export async function appendEvent(
+export function appendEvent(
   sessionCode: string,
   eventType: EventType,
   byDeviceId: string | null,
   payload: Record<string, unknown>,
 ): Promise<EventLogEntry> {
-  await mkdir(DATA_DIR, { recursive: true });
-  const seq = await nextSeq(sessionCode);
+  const prev = appendQueues.get(sessionCode) ?? Promise.resolve();
+  const task = prev.then(async () => {
+    await mkdir(DATA_DIR, { recursive: true });
+    const seq = (await loadMaxSeq(sessionCode)) + 1;
+    seqCounters.set(sessionCode, seq);
 
-  const entry: EventLogEntry = {
-    seq,
-    sessionCode,
-    eventType,
-    serverTs: Date.now(),
-    byDeviceId,
-    payload,
-  };
-  await appendFile(logPath(sessionCode), JSON.stringify(entry) + "\n", "utf8");
-  return entry;
+    const entry: EventLogEntry = {
+      seq,
+      sessionCode,
+      eventType,
+      serverTs: Date.now(),
+      byDeviceId,
+      payload,
+    };
+    await appendFile(logPath(sessionCode), JSON.stringify(entry) + "\n", "utf8");
+    return entry;
+  });
+  // Advance the per-session queue with an error-swallowing tail. Attaching this
+  // handler also marks `task` as handled, so a fire-and-forget caller can't
+  // trigger an unhandled rejection. Drop the entry once it settles if nothing
+  // newer queued behind it, so the map doesn't grow unbounded over many codes.
+  const tail = task.then(
+    () => {},
+    () => {},
+  );
+  appendQueues.set(sessionCode, tail);
+  void tail.then(() => {
+    if (appendQueues.get(sessionCode) === tail) appendQueues.delete(sessionCode);
+  });
+  return task;
 }
 
-/** Read back all log entries for a session, in order, for replay/analysis. */
+/** Read back all log entries for a session, ordered by seq, for replay/analysis. */
 export async function readSession(sessionCode: string): Promise<EventLogEntry[]> {
   try {
     const raw = await readFile(logPath(sessionCode), "utf8");
     return raw
       .split("\n")
       .filter((line) => line.trim().length > 0)
-      .map((line) => JSON.parse(line) as EventLogEntry);
+      .map((line) => JSON.parse(line) as EventLogEntry)
+      .sort((a, b) => a.seq - b.seq);
   } catch (err) {
     if ((err as NodeJS.ErrnoException).code === "ENOENT") return [];
     throw err;

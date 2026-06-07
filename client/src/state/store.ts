@@ -4,12 +4,7 @@
  */
 
 import { create } from "zustand";
-import type {
-  DevicePosition,
-  Mark,
-  ServerMessage,
-  Wind,
-} from "@ezrc/shared";
+import type { DevicePosition, Mark, ServerMessage, Wind } from "@ezrc/shared";
 import type { GeoStatus } from "../geo/geolocation";
 
 export type ConnStatus = "disconnected" | "connecting" | "connected";
