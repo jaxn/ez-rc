@@ -39,6 +39,8 @@ interface AppState {
   connStatus: ConnStatus;
   geoStatus: GeoStatus;
   geoMessage?: string;
+  /** Last server-reported error (e.g. invalid session code), for the UI. */
+  error: string | null;
 
   // live data (devices keyed by deviceId)
   devices: Record<string, DevicePosition>;
@@ -52,6 +54,7 @@ interface AppState {
   setConnStatus: (s: ConnStatus) => void;
   setGeoStatus: (s: GeoStatus, message?: string) => void;
   setSelfPosition: (pos: DevicePosition) => void;
+  clearError: () => void;
   applyServerMessage: (msg: ServerMessage) => void;
   reset: () => void;
 }
@@ -62,6 +65,7 @@ export const useStore = create<AppState>((set, get) => ({
   sessionCode: null,
   connStatus: "disconnected",
   geoStatus: "idle",
+  error: null,
   devices: {},
   marks: [],
   wind: null,
@@ -74,6 +78,7 @@ export const useStore = create<AppState>((set, get) => ({
   setSessionCode: (sessionCode) => set({ sessionCode }),
   setConnStatus: (connStatus) => set({ connStatus }),
   setGeoStatus: (geoStatus, geoMessage) => set({ geoStatus, geoMessage }),
+  clearError: () => set({ error: null }),
 
   setSelfPosition: (pos) =>
     set((state) => ({ devices: { ...state.devices, [pos.deviceId]: pos } })),
@@ -83,6 +88,10 @@ export const useStore = create<AppState>((set, get) => ({
       case "snapshot": {
         const devices: Record<string, DevicePosition> = {};
         for (const d of msg.state.devices) devices[d.deviceId] = d;
+        // Preserve our own locally-tracked position: the watch may have a fix
+        // before we joined, and the server has no position for us yet.
+        const prevSelf = get().devices[msg.selfDeviceId];
+        if (prevSelf && !devices[msg.selfDeviceId]) devices[msg.selfDeviceId] = prevSelf;
         set({
           devices,
           marks: msg.state.marks,
@@ -140,6 +149,7 @@ export const useStore = create<AppState>((set, get) => ({
         break;
       case "error":
         console.warn("server error", msg.code, msg.message);
+        set({ error: msg.message });
         break;
     }
   },
@@ -148,6 +158,7 @@ export const useStore = create<AppState>((set, get) => ({
     set({
       sessionCode: null,
       connStatus: "disconnected",
+      error: null,
       devices: {},
       marks: [],
       wind: null,

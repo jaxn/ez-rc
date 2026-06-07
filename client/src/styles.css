@@ -106,6 +106,50 @@ button:disabled {
   color: #7a8893;
   margin: 0.3rem 0 0;
 }
+.welcome-desc {
+  margin: 0 0 0.3rem;
+  color: #41525e;
+  line-height: 1.5;
+  font-size: 0.95rem;
+}
+.err {
+  margin: 0.2rem 0 0;
+  color: #b03030;
+  font-size: 0.82rem;
+}
+
+/* Role selection cards */
+.role-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  text-align: left;
+  padding: 0.9rem 1rem;
+  background: #e6edf2;
+  color: var(--navy);
+}
+.role-card strong {
+  font-size: 1.05rem;
+}
+.role-card span {
+  font-size: 0.82rem;
+  color: #5a6b78;
+}
+.role-card.primary-card {
+  background: var(--sea);
+  color: #fff;
+}
+.role-card.primary-card span {
+  color: rgba(255, 255, 255, 0.88);
+}
+.back-btn {
+  background: none;
+  color: var(--navy);
+  text-decoration: underline;
+  align-self: flex-start;
+  font-size: 0.85rem;
+  padding: 0;
+}
 
 /* ---------- Map screen ---------- */
 .map-screen {
