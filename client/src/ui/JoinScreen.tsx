@@ -19,6 +19,12 @@ export function JoinScreen({ onJoin }: Props) {
   // Reflect store name if it changes (e.g. first load).
   useEffect(() => setLocalName(storedName), [storedName]);
 
+  // Clear the busy flag if the connection drops/fails (otherwise the form would
+  // stay disabled until a reload). On success this screen unmounts instead.
+  useEffect(() => {
+    if (connStatus === "disconnected") setBusy(false);
+  }, [connStatus]);
+
   const connecting = busy || connStatus === "connecting";
 
   function submit(sessionCode: string) {
@@ -66,7 +72,7 @@ export function JoinScreen({ onJoin }: Props) {
             placeholder="e.g. 7QK2P"
             autoCapitalize="characters"
             autoComplete="off"
-            maxLength={8}
+            maxLength={5}
           />
         </label>
 

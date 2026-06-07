@@ -15,6 +15,37 @@ const DATA_DIR = path.resolve(__dirname, "../../data");
 /** Per-session monotonic sequence counters (in-memory; recovered lazily on read). */
 const seqCounters = new Map<string, number>();
 
+/**
+ * Reserve the next seq for a session. On first use after a (re)start, the
+ * counter is seeded from the highest seq already on disk so we never restart at
+ * 1 and emit duplicate seqs. Awaits are chained per code so concurrent appends
+ * can't race on the lazy seed.
+ */
+const seedLocks = new Map<string, Promise<void>>();
+
+async function nextSeq(sessionCode: string): Promise<number> {
+  if (!seqCounters.has(sessionCode)) {
+    let release!: () => void;
+    const inFlight = seedLocks.get(sessionCode);
+    if (inFlight) {
+      await inFlight;
+    } else {
+      seedLocks.set(sessionCode, new Promise<void>((r) => (release = r)));
+      try {
+        const existing = await readSession(sessionCode);
+        const maxSeq = existing.reduce((max, e) => Math.max(max, e.seq), 0);
+        if (!seqCounters.has(sessionCode)) seqCounters.set(sessionCode, maxSeq);
+      } finally {
+        release();
+        seedLocks.delete(sessionCode);
+      }
+    }
+  }
+  const seq = (seqCounters.get(sessionCode) ?? 0) + 1;
+  seqCounters.set(sessionCode, seq);
+  return seq;
+}
+
 function logPath(sessionCode: string): string {
   // Session codes are restricted to a safe alphabet, but sanitize defensively.
   const safe = sessionCode.replace(/[^A-Za-z0-9_-]/g, "");
@@ -29,8 +60,7 @@ export async function appendEvent(
   payload: Record<string, unknown>,
 ): Promise<EventLogEntry> {
   await mkdir(DATA_DIR, { recursive: true });
-  const seq = (seqCounters.get(sessionCode) ?? 0) + 1;
-  seqCounters.set(sessionCode, seq);
+  const seq = await nextSeq(sessionCode);
 
   const entry: EventLogEntry = {
     seq,

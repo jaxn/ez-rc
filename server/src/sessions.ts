@@ -47,6 +47,17 @@ export function normalizeCode(code: string): string {
   return code.trim().toUpperCase();
 }
 
+const CODE_RE = new RegExp(`^[${CODE_ALPHABET}]{${CODE_LENGTH}}$`);
+
+/**
+ * A code is valid only if it matches the generated format exactly. This keeps
+ * arbitrary input (e.g. "../", ".") from becoming a session — which would
+ * otherwise collapse to a shared/unsafe event-log filename downstream.
+ */
+export function isValidSessionCode(code: string): boolean {
+  return CODE_RE.test(code);
+}
+
 /** Get an existing session, or create one with the given (normalized) code. */
 export function getOrCreateSession(code: string): { session: Session; created: boolean } {
   const existing = sessions.get(code);

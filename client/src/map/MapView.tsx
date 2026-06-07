@@ -77,14 +77,18 @@ export function MapView() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Read the latest state from the store rather than a render closure, so the
+  // `load` handler (registered once) can never push stale/empty data even if a
+  // snapshot arrives before the map finishes loading.
   function updateSources() {
     const map = mapRef.current;
     if (!map || !readyRef.current) return;
+    const { devices: d, marks: m, flagBoatId: fb, deviceId: self } = useStore.getState();
     (map.getSource(SRC_DEVICES) as maplibregl.GeoJSONSource | undefined)?.setData(
-      devicesFC(devices, flagBoatId, selfDeviceId),
+      devicesFC(d, fb, self),
     );
-    (map.getSource(SRC_MARKS) as maplibregl.GeoJSONSource | undefined)?.setData(marksFC(marks));
-    (map.getSource(SRC_COURSE) as maplibregl.GeoJSONSource | undefined)?.setData(courseFC(marks));
+    (map.getSource(SRC_MARKS) as maplibregl.GeoJSONSource | undefined)?.setData(marksFC(m));
+    (map.getSource(SRC_COURSE) as maplibregl.GeoJSONSource | undefined)?.setData(courseFC(m));
   }
 
   // Push data into the map whenever state changes.

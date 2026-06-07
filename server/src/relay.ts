@@ -16,6 +16,7 @@ import { appendEvent } from "./eventLog.js";
 import {
   buildSnapshot,
   getOrCreateSession,
+  isValidSessionCode,
   normalizeCode,
   removeIfEmpty,
   type Session,
@@ -161,8 +162,12 @@ async function handleJoin(
   name: string,
 ): Promise<void> {
   const code = normalizeCode(rawCode);
-  if (!code) {
-    send(socket, { type: "error", code: "bad_code", message: "Session code required." });
+  if (!isValidSessionCode(code)) {
+    send(socket, {
+      type: "error",
+      code: "bad_code",
+      message: "Invalid session code. Codes are 5 characters (A–Z, 2–9).",
+    });
     return;
   }
 

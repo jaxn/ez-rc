@@ -163,7 +163,16 @@ export function parseClientMessage(raw: string): ClientMessage | null {
     }
     case "position": {
       const m = data as PositionMsg;
-      return isFiniteNum(m.lat) && isFiniteNum(m.lng) ? m : null;
+      return (
+        isFiniteNum(m.lat) &&
+        isFiniteNum(m.lng) &&
+        isFiniteNum(m.clientTs) &&
+        isOptionalFiniteNum(m.accuracy) &&
+        isNullableFiniteNum(m.heading) &&
+        isNullableFiniteNum(m.speed)
+      )
+        ? m
+        : null;
     }
     case "setFlagBoat": {
       const m = data as SetFlagBoatMsg;
@@ -171,13 +180,20 @@ export function parseClientMessage(raw: string): ClientMessage | null {
     }
     case "dropMark": {
       const m = data as DropMarkMsg;
-      return MARK_TYPES.includes(m.markType) && isFiniteNum(m.lat) && isFiniteNum(m.lng)
+      return MARK_TYPES.includes(m.markType) &&
+        isFiniteNum(m.lat) &&
+        isFiniteNum(m.lng) &&
+        isFiniteNum(m.clientTs)
         ? m
         : null;
     }
     case "setWind": {
       const m = data as SetWindMsg;
-      return isFiniteNum(m.directionDeg) ? m : null;
+      return isFiniteNum(m.directionDeg) &&
+        isFiniteNum(m.clientTs) &&
+        isOptionalFiniteNum(m.speedKts)
+        ? m
+        : null;
     }
     case "removeMark": {
       const m = data as RemoveMarkMsg;
@@ -192,4 +208,14 @@ export function parseClientMessage(raw: string): ClientMessage | null {
 
 function isFiniteNum(v: unknown): v is number {
   return typeof v === "number" && Number.isFinite(v);
+}
+
+/** Finite number, or absent. */
+function isOptionalFiniteNum(v: unknown): boolean {
+  return v === undefined || isFiniteNum(v);
+}
+
+/** Finite number, or absent, or explicitly null (e.g. heading/speed with no reading). */
+function isNullableFiniteNum(v: unknown): boolean {
+  return v === undefined || v === null || isFiniteNum(v);
 }

@@ -4,6 +4,7 @@ import {
   generateSessionCode,
   getOrCreateSession,
   getSession,
+  isValidSessionCode,
   normalizeCode,
   removeIfEmpty,
 } from "./sessions.js";
@@ -16,6 +17,16 @@ describe("session codes", () => {
 
   it("normalizes user input", () => {
     expect(normalizeCode("  abc12 ")).toBe("ABC12");
+  });
+
+  it("accepts only well-formed codes and rejects unsafe input", () => {
+    expect(isValidSessionCode(generateSessionCode())).toBe(true);
+    expect(isValidSessionCode("ABCDE")).toBe(true);
+    expect(isValidSessionCode("ABCD")).toBe(false); // too short
+    expect(isValidSessionCode("ABCDEF")).toBe(false); // too long
+    expect(isValidSessionCode("ABOI1")).toBe(false); // ambiguous chars not in alphabet
+    expect(isValidSessionCode("../..")).toBe(false);
+    expect(isValidSessionCode("")).toBe(false);
   });
 });
 
